@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}HR System{% endblock %}</title>
+    
+    <style>
+        body { 
+            font-family: Arial, sans-serif;
+            background-color: #f8f9fa;
+            padding: 20px;
+        }
+        .header { 
+            background: #007bff;
+            color: white; 
+            padding: 20px;
+            border-radius: 5px;
+            margin-bottom: 20px;
+        }
+        .content {
+            background: white;
+            padding: 20px;
+            border-radius: 5px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+        }
+        .footer {
+            margin-top: 20px;
+            text-align: center;
+            color: #666;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>HR Система учета рабочего времени</h1>
+        {% if user.is_authenticated %}
+            <p>Вы вошли как: <strong>{{ user.username }}</strong> | 
+               <a href="/logout/" style="color: white;">Выйти</a>
+            </p>
+        {% else %}
+            <p><a href="/login/" style="color: white;">Войти в систему</a></p>
+        {% endif %}
+    </div>
+    
+    <div class="content">
+        {% block content %}
+        <!-- Контент будет здесь -->
+        {% endblock %}
+    </div>
+    
+    <div class="footer">
+        <hr>
+        <p>HR Система &copy; {% now "Y" %}</p>
+    </div>
+</body>
+</html>
