@@ -1,0 +1,58 @@
+{% extends 'base.html' %}
+
+{% block title %}Дашборд - HR Система{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-md-12">
+        <div class="card">
+            <div class="card-header bg-primary text-white">
+                <h4 class="mb-0"><i class="fas fa-tachometer-alt"></i> Дашборд</h4>
+            </div>
+            <div class="card-body">
+                <h5>Добро пожаловать, {{ user.username }}!</h5>
+                <p class="lead">Система учета рабочего времени и отпусков</p>
+                
+                <div class="row mt-4">
+                    <div class="col-md-4">
+                        <div class="card text-white bg-success mb-3">
+                            <div class="card-body">
+                                <h5 class="card-title"><i class="fas fa-calendar-check"></i> Сегодня</h5>
+                                <p class="card-text">{{ today|date:"d.m.Y" }}</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="card text-white bg-info mb-3">
+                            <div class="card-body">
+                                <h5 class="card-title"><i class="fas fa-user"></i> Профиль</h5>
+                                <p class="card-text">
+                                    {% if user.get_full_name %}
+                                        {{ user.get_full_name }}
+                                    {% else %}
+                                        {{ user.username }}
+                                    {% endif %}
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="card text-white bg-warning mb-3">
+                            <div class="card-body">
+                                <h5 class="card-title"><i class="fas fa-cog"></i> Быстрые действия</h5>
+                                <a href="#" class="btn btn-light btn-sm">Табель</a>
+                                <a href="#" class="btn btn-light btn-sm">Отпуск</a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="alert alert-info mt-3">
+                    <i class="fas fa-info-circle"></i>
+                    Система находится в разработке. Основные функции будут добавлены в ближайшее время.
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

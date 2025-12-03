@@ -1,0 +1,41 @@
+# .gitignore
+# Django
+*.pyc
+__pycache__/
+*.sqlite3
+*.pyo
+*.pyd
+.Python
+env/
+venv/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Media files (загружаемые пользователем)
+/media/
+!media/avatars/default.png
+
+# Статические файлы (в production собираются отдельно)
+/staticfiles/
+
+# Миграции (но можно их включать, решите сами)
+# attendance/migrations/
+# employees/migrations/
+
+# Логи
+*.log
+
+# Базы данных
+*.db
+
+# Environment variables
+.env
+.env.local
