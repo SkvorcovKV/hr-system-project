@@ -15,7 +15,6 @@ urlpatterns = [
     
     # Наши приложения
     path('attendance/', include('attendance.urls')),
-    # УБЕРИТЕ эту строку: path('test/', include('attendance.urls')),
 ]
 
 from django.conf import settings
