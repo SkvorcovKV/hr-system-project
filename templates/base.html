@@ -33,7 +33,12 @@
                 <i class="fas fa-business-time"></i> HR Система
             </a>
             
-            <div class="collapse navbar-collapse">
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <!-- Левая часть навигации -->
                 <ul class="navbar-nav me-auto">
                     {% if user.is_authenticated %}
                     <li class="nav-item">
@@ -41,9 +46,15 @@
                             <i class="fas fa-tachometer-alt"></i> Дашборд
                         </a>
                     </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="{% url 'attendance:month_view' %}">
+                            <i class="fas fa-calendar-alt"></i> Табель
+                        </a>
+                    </li>
                     {% endif %}
                 </ul>
                 
+                <!-- Правая часть навигации (пользователь) -->
                 <ul class="navbar-nav">
                     {% if user.is_authenticated %}
                     <li class="nav-item dropdown">
@@ -53,7 +64,14 @@
                         <ul class="dropdown-menu">
                             <li><a class="dropdown-item" href="/admin/">Админ-панель</a></li>
                             <li><hr class="dropdown-divider"></li>
-                            <li><a class="dropdown-item" href="{% url 'logout' %}">Выйти</a></li>
+                            <li>
+                                <form method="post" action="{% url 'logout' %}" style="margin: 0; padding: 0;">
+                                    {% csrf_token %}
+                                    <button type="submit" class="dropdown-item" style="all: unset; width: 100%; padding: 0.25rem 1rem; clear: both; color: #212529; text-align: inherit; white-space: nowrap; background-color: transparent; border: 0;">
+                                        <i class="fas fa-sign-out-alt"></i> Выйти
+                                    </button>
+                                </form>
+                            </li>
                         </ul>
                     </li>
                     {% else %}
@@ -90,6 +108,17 @@
 
     <!-- Bootstrap JS -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
+    
+    <!-- Скрытая форма для выхода -->
+    <form method="post" action="{% url 'logout' %}" id="logout-form" style="display: none;">
+        {% csrf_token %}
+    </form>
+    
+    <script>
+    function logoutUser() {
+        document.getElementById('logout-form').submit();
+    }
+    </script>
     
     {% block extra_js %}{% endblock %}
 </body>

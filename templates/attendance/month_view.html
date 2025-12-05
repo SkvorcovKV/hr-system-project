@@ -1,0 +1,335 @@
+{% extends 'base.html' %}
+
+{% block title %}Табель учета - {{ view_date|date:"F Y" }}{% endblock %}
+
+{% block extra_css %}
+<style>
+    .calendar-day {
+        height: 120px;
+        border: 1px solid #dee2e6;
+        padding: 8px;
+        overflow: hidden;
+        position: relative;
+    }
+    .calendar-day.weekend {
+        background-color: #f8f9fa;
+    }
+    .calendar-day.today {
+        border: 2px solid #007bff;
+        background-color: #f0f8ff;
+    }
+    .calendar-day.other-month {
+        background-color: #f8f9fa;
+        color: #6c757d;
+    }
+    .day-number {
+        font-weight: bold;
+        font-size: 1.1em;
+        margin-bottom: 5px;
+    }
+    .day-status {
+        font-size: 0.8em;
+        padding: 2px 5px;
+        border-radius: 3px;
+        display: inline-block;
+        margin-top: 5px;
+    }
+    .status-select {
+        width: 100%;
+        font-size: 0.8em;
+        padding: 2px;
+    }
+    .status-form {
+        margin-top: 5px;
+    }
+    .legend-item {
+        display: inline-block;
+        width: 15px;
+        height: 15px;
+        margin-right: 5px;
+        border-radius: 3px;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="row mb-4">
+    <div class="col-md-12">
+        <div class="card">
+            <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center">
+                <h4 class="mb-0">
+                    <i class="fas fa-calendar-alt"></i> 
+                    Табель учета - {{ view_date|date:"F Y" }}
+                    {% if employee != user %}
+                    ({{ employee.get_full_name|default:employee.username }})
+                    {% endif %}
+                </h4>
+                
+                <div class="btn-group" role="group">
+                    <a href="?month={{ prev_month|date:'Y-m' }}{% if request.GET.employee_id %}&employee_id={{ request.GET.employee_id }}{% endif %}" 
+                       class="btn btn-light btn-sm">
+                        <i class="fas fa-chevron-left"></i> {{ prev_month|date:"M" }}
+                    </a>
+                    <a href="?month={{ today|date:'Y-m' }}{% if request.GET.employee_id %}&employee_id={{ request.GET.employee_id }}{% endif %}" 
+                       class="btn btn-light btn-sm">
+                        Текущий месяц
+                    </a>
+                    <a href="?month={{ next_month|date:'Y-m' }}{% if request.GET.employee_id %}&employee_id={{ request.GET.employee_id }}{% endif %}" 
+                       class="btn btn-light btn-sm">
+                        {{ next_month|date:"M" }} <i class="fas fa-chevron-right"></i>
+                    </a>
+                </div>
+            </div>
+            
+            <div class="card-body">
+                <!-- Фильтры (для администраторов) -->
+                {% if is_admin %}
+                <div class="row mb-4">
+                    <div class="col-md-4">
+                        <div class="card">
+                            <div class="card-header bg-light">
+                                <h6 class="mb-0">Фильтр по сотруднику</h6>
+                            </div>
+                            <div class="card-body">
+                                <form method="get" class="row g-2">
+                                    <div class="col-9">
+                                        <input type="text" class="form-control form-control-sm" 
+                                               name="employee_id" placeholder="ID сотрудника" 
+                                               value="{{ request.GET.employee_id|default:'' }}">
+                                    </div>
+                                    <div class="col-3">
+                                        <button type="submit" class="btn btn-primary btn-sm w-100">
+                                            <i class="fas fa-filter"></i>
+                                        </button>
+                                    </div>
+                                    {% if request.GET.month %}
+                                    <input type="hidden" name="month" value="{{ request.GET.month }}">
+                                    {% endif %}
+                                </form>
+                                {% if employee != user %}
+                                <div class="mt-2">
+                                    <a href="?month={{ view_date|date:'Y-m' }}" class="btn btn-outline-secondary btn-sm">
+                                        Показать мой табель
+                                    </a>
+                                </div>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                {% endif %}
+                
+                <!-- Календарь -->
+                <div class="table-responsive">
+                    <table class="table table-bordered">
+                        <thead class="table-light">
+                            <tr>
+                                <th class="text-center">Понедельник</th>
+                                <th class="text-center">Вторник</th>
+                                <th class="text-center">Среда</th>
+                                <th class="text-center">Четверг</th>
+                                <th class="text-center">Пятница</th>
+                                <th class="text-center">Суббота</th>
+                                <th class="text-center">Воскресенье</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for week in month_days %}
+                            <tr>
+                                {% for day in week %}
+                                <td class="calendar-day 
+                                    {% if day == 0 %}other-month{% endif %}
+                                    {% if view_date.year == today.year and view_date.month == today.month and day == today.day %}today{% endif %}
+                                    {% if forloop.counter >= 6 %}weekend{% endif %}">
+                                    
+                                    {% if day != 0 %}
+                                    <div class="day-number">
+                                        {{ day }}
+                                    </div>
+                                    
+                                    {% with record_date=view_date|date:view_date.year|add:'-'|add:view_date.month|add:'-'|add:day %}
+                                    {% with day_record=records_dict|get_item:day %}
+                                    
+                                    {% if day_record %}
+                                    <!-- Существующая запись -->
+                                    <div class="day-status" style="background-color: {{ day_record.absence_type.color }}20; color: {{ day_record.absence_type.color }};">
+                                        <strong>{{ day_record.absence_type.name }}</strong>
+                                        {% if day_record.comment %}
+                                        <br><small>{{ day_record.comment|truncatechars:20 }}</small>
+                                        {% endif %}
+                                        {% if not day_record.is_confirmed %}
+                                        <br><small class="text-warning"><i class="fas fa-clock"></i> Ожидает подтверждения</small>
+                                        {% else %}
+                                        <br><small class="text-success"><i class="fas fa-check"></i> Подтверждено</small>
+                                        {% endif %}
+                                    </div>
+                                    
+                                    <!-- Форма для редактирования (только для будущих дат или админов) -->
+                                    {% if user.is_staff or day_record.date > today %}
+                                    <div class="status-form mt-2">
+                                        <button class="btn btn-sm btn-outline-primary w-100" 
+                                                onclick="editRecord({{ day_record.id }})">
+                                            <i class="fas fa-edit"></i> Изменить
+                                        </button>
+                                    </div>
+                                    {% endif %}
+                                    
+                                    {% else %}
+                                    <!-- Нет записи - форма для добавления -->
+                                    {% with current_date=view_date|date:view_date.year|add:'-'|add:view_date.month|add:'-'|add:day %}
+                                    {% if current_date <= today|add:30 %}
+                                    <div class="status-form">
+                                        <select class="status-select" 
+                                                onchange="updateAttendance('{{ current_date }}', this.value)">
+                                            <option value="">-- Выберите статус --</option>
+                                            {% for type in absence_types %}
+                                            <option value="{{ type.id }}">{{ type.name }}</option>
+                                            {% endfor %}
+                                        </select>
+                                    </div>
+                                    {% endif %}
+                                    {% endwith %}
+                                    {% endif %}
+                                    
+                                    {% endwith %}
+                                    {% endwith %}
+                                    {% endif %}
+                                </td>
+                                {% endfor %}
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                
+                <!-- Легенда -->
+                <div class="card mt-4">
+                    <div class="card-header bg-light">
+                        <h6 class="mb-0">Легенда статусов</h6>
+                    </div>
+                    <div class="card-body">
+                        <div class="row">
+                            {% for type in absence_types %}
+                            <div class="col-md-3 col-sm-4 mb-2">
+                                <div class="d-flex align-items-center">
+                                    <div class="legend-item" style="background-color: {{ type.color }};"></div>
+                                    <span>{{ type.name }}</span>
+                                </div>
+                            </div>
+                            {% endfor %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Модальное окно для редактирования -->
+<div class="modal fade" id="editModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Редактирование записи</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <form id="editForm">
+                    {% csrf_token %}
+                    <input type="hidden" id="recordId" name="record_id">
+                    
+                    <div class="mb-3">
+                        <label for="absenceType" class="form-label">Тип присутствия:</label>
+                        <select class="form-select" id="absenceType" name="absence_type">
+                            {% for type in absence_types %}
+                            <option value="{{ type.id }}">{{ type.name }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="comment" class="form-label">Комментарий:</label>
+                        <textarea class="form-control" id="comment" name="comment" rows="3"></textarea>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Отмена</button>
+                <button type="button" class="btn btn-primary" onclick="saveRecord()">Сохранить</button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+// Простой фильтр для шаблонов
+function get_item(dictionary, key) {
+    return dictionary[key];
+}
+
+// Обновление статуса через AJAX
+function updateAttendance(dateStr, typeId) {
+    if (!typeId) return;
+    
+    fetch('/attendance/update-attendance/', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/x-www-form-urlencoded',
+            'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value,
+            'X-Requested-With': 'XMLHttpRequest'
+        },
+        body: `date=${dateStr}&absence_type_id=${typeId}`
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            location.reload();
+        } else {
+            alert('Ошибка: ' + data.error);
+        }
+    });
+}
+
+// Открытие модального окна для редактирования
+function editRecord(recordId) {
+    // Загружаем данные записи
+    fetch(`/attendance/get-record/${recordId}/`)
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            document.getElementById('recordId').value = data.record.id;
+            document.getElementById('absenceType').value = data.record.absence_type_id;
+            document.getElementById('comment').value = data.record.comment || '';
+            
+            // Показываем модальное окно
+            new bootstrap.Modal(document.getElementById('editModal')).show();
+        }
+    });
+}
+
+// Сохранение изменений
+function saveRecord() {
+    const form = document.getElementById('editForm');
+    const formData = new FormData(form);
+    
+    fetch('/attendance/save-record/', {
+        method: 'POST',
+        body: formData,
+        headers: {
+            'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value,
+            'X-Requested-With': 'XMLHttpRequest'
+        }
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            location.reload();
+        } else {
+            alert('Ошибка: ' + data.error);
+        }
+    });
+}
+</script>
+{% endblock %}

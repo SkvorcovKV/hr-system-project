@@ -1,0 +1,10 @@
+<!-- templates/includes/logout_form.html -->
+<form method="post" action="{% url 'logout' %}" id="logout-form" style="display: none;">
+    {% csrf_token %}
+</form>
+
+<script>
+function logoutUser() {
+    document.getElementById('logout-form').submit();
+}
+</script>

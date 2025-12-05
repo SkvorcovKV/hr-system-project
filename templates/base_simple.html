@@ -29,6 +29,21 @@
             text-align: center;
             color: #666;
         }
+        .logout-form {
+            display: inline;
+        }
+        .logout-btn {
+            background: none;
+            border: none;
+            color: white;
+            text-decoration: underline;
+            cursor: pointer;
+            padding: 0;
+            font: inherit;
+        }
+        .logout-btn:hover {
+            color: #f0f0f0;
+        }
     </style>
 </head>
 <body>
@@ -36,7 +51,11 @@
         <h1>HR Система учета рабочего времени</h1>
         {% if user.is_authenticated %}
             <p>Вы вошли как: <strong>{{ user.username }}</strong> | 
-               <a href="/logout/" style="color: white;">Выйти</a>
+                <!-- ФОРМА ДЛЯ ВЫХОДА -->
+                <form method="post" action="{% url 'logout' %}" class="logout-form">
+                    {% csrf_token %}
+                    <button type="submit" class="logout-btn">Выйти</button>
+                </form>
             </p>
         {% else %}
             <p><a href="/login/" style="color: white;">Войти в систему</a></p>
