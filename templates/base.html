@@ -38,19 +38,52 @@
             </button>
             
             <div class="collapse navbar-collapse" id="navbarNav">
+
                 <!-- Левая часть навигации -->
                 <ul class="navbar-nav me-auto">
                     {% if user.is_authenticated %}
-                    <li class="nav-item">
-                        <a class="nav-link" href="{% url 'attendance:dashboard' %}">
-                            <i class="fas fa-tachometer-alt"></i> Дашборд
-                        </a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link" href="{% url 'attendance:month_view' %}">
-                            <i class="fas fa-calendar-alt"></i> Табель
-                        </a>
-                    </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="{% url 'attendance:dashboard' %}">
+                                <i class="fas fa-tachometer-alt"></i> Дашборд
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="{% url 'attendance:month_view' %}">
+                                <i class="fas fa-calendar-alt"></i> Табель
+                            </a>
+                        </li>
+        
+                        <!-- Пункт "Сотрудники" — виден только администраторам -->
+                        {% if user.is_staff %}
+                        <li class="nav-item dropdown">
+                            <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown" title="Инструменты для управления системой">
+                                <i class="fas fa-tools"></i> Администрирование
+                            </a>
+                            <ul class="dropdown-menu">
+                                <li>
+                                    <a class="dropdown-item" href="/admin/" title="Полный доступ к администрированию: пользователи, группы, настройки">
+                                        <i class="fas fa-cogs"></i> Панель администратора
+                                    </a>
+                                </li>
+                                <li>
+                                    <a class="dropdown-item" href="{% url 'attendance:employee_list' %}" title="Просмотр и управление списком всех сотрудников">
+                                        <i class="fas fa-users"></i> Список сотрудников
+                                    </a>
+                                </li>
+                                <li><hr class="dropdown-divider"></li>
+                                <li>
+                                    <a class="dropdown-item" href="/admin/attendance/attendancerecord/" title="Просмотр всех записей посещаемости, фильтрация и ручное редактирование">
+                                        <i class="fas fa-calendar-check"></i> Все записи табеля
+                                    </a>
+                                </li>
+                                <li>
+                                    <a class="dropdown-item" href="/admin/attendance/absencetype/" title="Управление типами отсутствий: отпуска, больничные, командировки и др.">
+                                        <i class="fas fa-tags"></i> Типы отсутствий
+                                    </a>
+                                </li>
+                            </ul>
+                        </li>
+                        {% endif %}
                     {% endif %}
                 </ul>
                 

@@ -4,6 +4,12 @@ from django.db import models
 # Create your models here.
 from django.contrib.auth.models import User
 
+class EmployeeProfile(models.Model):
+    def is_manager_of(self, other_employee):
+        """Проверяет, является ли этот сотрудник руководителем другого"""
+        if not self.department:
+            return False
+        return self.department.manager == self.user and other_employee.profile.department == self.department
 class Department(models.Model):
     name = models.CharField(max_length=100, verbose_name="Название отдела")
     manager = models.ForeignKey(

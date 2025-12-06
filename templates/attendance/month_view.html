@@ -3,6 +3,9 @@
 {% block title %}Табель учета - {{ view_date|date:"F Y" }}{% endblock %}
 
 {% block extra_css %}
+
+{% load attendance_filters %}
+
 <style>
     .calendar-day {
         height: 120px;
@@ -85,39 +88,39 @@
                 <!-- Фильтры (для администраторов) -->
                 {% if is_admin %}
                 <div class="row mb-4">
-                    <div class="col-md-4">
+                    <div class="col-md-6">
                         <div class="card">
                             <div class="card-header bg-light">
-                                <h6 class="mb-0">Фильтр по сотруднику</h6>
+                                <h6 class="mb-0">Выбор сотрудника</h6>
                             </div>
                             <div class="card-body">
                                 <form method="get" class="row g-2">
-                                    <div class="col-9">
-                                        <input type="text" class="form-control form-control-sm" 
-                                               name="employee_id" placeholder="ID сотрудника" 
-                                               value="{{ request.GET.employee_id|default:'' }}">
-                                    </div>
-                                    <div class="col-3">
-                                        <button type="submit" class="btn btn-primary btn-sm w-100">
-                                            <i class="fas fa-filter"></i>
-                                        </button>
-                                    </div>
-                                    {% if request.GET.month %}
-                                    <input type="hidden" name="month" value="{{ request.GET.month }}">
-                                    {% endif %}
-                                </form>
-                                {% if employee != user %}
-                                <div class="mt-2">
-                                    <a href="?month={{ view_date|date:'Y-m' }}" class="btn btn-outline-secondary btn-sm">
-                                        Показать мой табель
-                                    </a>
-                                </div>
-                                {% endif %}
+                                    <div class="col-8">
+                                        <select name="employee_id" class="form-select form-select-sm" 
+                                            onchange="this.form.submit()">
+                                        <option value="">-- Выберите сотрудника --</option>
+                                        {% for emp_user in all_employees %}
+                                        <option value="{{ emp_user.id }}" 
+                                            {% if employee.id == emp_user.id %}selected{% endif %}>
+                                        {{ emp_user.get_full_name|default:emp_user.username }}
+                                    </option>
+                                    {% endfor %}
+                                </select>
                             </div>
-                        </div>
+                            <div class="col-4">
+                                <a href="?month={{ view_date|date:'Y-m' }}" class="btn btn-outline-secondary btn-sm w-100">
+                                    Мой табель
+                                </a>
+                            </div>
+                            {% if request.GET.month %}
+                            <input type="hidden" name="month" value="{{ request.GET.month }}">
+                            {% endif %}
+                        </form>
                     </div>
                 </div>
-                {% endif %}
+            </div>
+        </div>
+        {% endif %}
                 
                 <!-- Календарь -->
                 <div class="table-responsive">
@@ -147,20 +150,40 @@
                                         {{ day }}
                                     </div>
                                     
-                                    {% with record_date=view_date|date:view_date.year|add:'-'|add:view_date.month|add:'-'|add:day %}
+                                    <!-- Проверяем есть ли запись для этого дня -->
                                     {% with day_record=records_dict|get_item:day %}
-                                    
                                     {% if day_record %}
                                     <!-- Существующая запись -->
                                     <div class="day-status" style="background-color: {{ day_record.absence_type.color }}20; color: {{ day_record.absence_type.color }};">
+                                        <i class="fas 
+                                            {% if day_record.absence_type.code == '01' %}fa-briefcase
+                                            {% elif day_record.absence_type.code == '09' %}fa-umbrella-beach
+                                            {% elif day_record.absence_type.code == '19' %}fa-hospital
+                                            {% elif day_record.absence_type.code == '38' %}fa-laptop-house
+                                            {% elif day_record.absence_type.code == '06' %}fa-plane
+                                            {% else %}fa-calendar
+                                            {% endif %}">
+                                        </i>
                                         <strong>{{ day_record.absence_type.name }}</strong>
+    
                                         {% if day_record.comment %}
-                                        <br><small>{{ day_record.comment|truncatechars:20 }}</small>
+                                            <br><small>{{ day_record.comment|truncatechars:20 }}</small>
                                         {% endif %}
+
+                                        <!-- Кнопка подтверждения (только для руководителя) -->
                                         {% if not day_record.is_confirmed %}
-                                        <br><small class="text-warning"><i class="fas fa-clock"></i> Ожидает подтверждения</small>
+                                            <br><small class="text-warning"><i class="fas fa-clock"></i> Ожидает подтверждения</small>
+                                            {% with employee=day_record.employee %}
+                                                {% if user.is_staff %}
+                                                    <br>
+                                                    <a href="{% url 'attendance:confirm_record' day_record.id %}" 
+                                                        class="btn btn-sm btn-success mt-1">
+                                                        <i class="fas fa-check"></i> Подтвердить
+                                                    </a>
+                                                {% endif %}
+                                            {% endwith %}
                                         {% else %}
-                                        <br><small class="text-success"><i class="fas fa-check"></i> Подтверждено</small>
+                                            <br><small class="text-success"><i class="fas fa-check"></i> Подтверждено</small>
                                         {% endif %}
                                     </div>
                                     
@@ -176,11 +199,11 @@
                                     
                                     {% else %}
                                     <!-- Нет записи - форма для добавления -->
-                                    {% with current_date=view_date|date:view_date.year|add:'-'|add:view_date.month|add:'-'|add:day %}
-                                    {% if current_date <= today|add:30 %}
+                                    {% with current_date=view_date|date:'Y'|add:'-'|add:view_date|date:'m'|add:'-'|add:day|stringformat:'02d' %}
+                                    {% if view_date.year == today.year and view_date.month == today.month and day <= today.day or view_date.year < today.year or view_date.month < today.month %}
                                     <div class="status-form">
-                                        <select class="status-select" 
-                                                onchange="updateAttendance('{{ current_date }}', this.value)">
+                                         <select class="status-select" 
+                                                onchange="updateAttendance('{{ view_date|date:"Y-m" }}-{{ day|stringformat:"02d" }}', this.value)">
                                             <option value="">-- Выберите статус --</option>
                                             {% for type in absence_types %}
                                             <option value="{{ type.id }}">{{ type.name }}</option>
@@ -190,8 +213,6 @@
                                     {% endif %}
                                     {% endwith %}
                                     {% endif %}
-                                    
-                                    {% endwith %}
                                     {% endwith %}
                                     {% endif %}
                                 </td>
@@ -264,34 +285,60 @@
 
 {% block extra_js %}
 <script>
-// Простой фильтр для шаблонов
-function get_item(dictionary, key) {
-    return dictionary[key];
-}
-
 // Обновление статуса через AJAX
 function updateAttendance(dateStr, typeId) {
-    if (!typeId) return;
+    console.log("=== DEBUG updateAttendance ===");
+    console.log("Полученная дата:", dateStr);
+    console.log("Полученный typeId:", typeId);
+    
+    // ПРОВЕРКА ДАТЫ (добавьте эту проверку)
+    if (!dateStr || dateStr.trim() === '') {
+        console.error("ОШИБКА: Дата пустая!");
+        alert("Ошибка: дата не определена. Пожалуйста, обновите страницу.");
+        return;
+    }
+    
+    // Проверка формата даты (YYYY-MM-DD)
+    const dateRegex = /^\d{4}-\d{2}-\d{2}$/;
+    if (!dateRegex.test(dateStr)) {
+        console.error("ОШИБКА: Неверный формат даты:", dateStr);
+        alert(`Ошибка: неверный формат даты. Должно быть ГГГГ-ММ-ДД, получено: ${dateStr}`);
+        return;
+    }
+    
+    if (!typeId) {
+        console.log("typeId пустой, выходим");
+        return;
+    }
     
     fetch('/attendance/update-attendance/', {
         method: 'POST',
         headers: {
             'Content-Type': 'application/x-www-form-urlencoded',
-            'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value,
+            'X-CSRFToken': '{{ csrf_token }}',
             'X-Requested-With': 'XMLHttpRequest'
         },
-        body: `date=${dateStr}&absence_type_id=${typeId}`
+        body: `date=${encodeURIComponent(dateStr)}&absence_type_id=${typeId}`
     })
-    .then(response => response.json())
+    .then(response => {
+        console.log("Статус ответа:", response.status);
+        return response.json();
+    })
     .then(data => {
+        console.log("Данные ответа:", data);
         if (data.success) {
+            console.log("Успех! Перезагружаем страницу...");
             location.reload();
         } else {
+            console.log("Ошибка от сервера:", data.error);
             alert('Ошибка: ' + data.error);
         }
+    })
+    .catch(error => {
+        console.error("Ошибка fetch:", error);
+        alert('Сетевая ошибка: ' + error.message);
     });
 }
-
 // Открытие модального окна для редактирования
 function editRecord(recordId) {
     // Загружаем данные записи
@@ -318,7 +365,7 @@ function saveRecord() {
         method: 'POST',
         body: formData,
         headers: {
-            'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value,
+            'X-CSRFToken': '{{ csrf_token }}',
             'X-Requested-With': 'XMLHttpRequest'
         }
     })
