@@ -9,9 +9,11 @@ from django.contrib import messages
 import calendar
 import logging
 from datetime import date, datetime, timedelta
-
 from .models import AttendanceRecord, AbsenceType
 from employees.models import EmployeeProfile
+
+from collections import defaultdict
+from django.utils import timezone
 
 logger = logging.getLogger(__name__)
 
@@ -131,6 +133,42 @@ def month_view(request, year=None, month=None):
     }
     
     return render(request, 'attendance/month_view.html', context)
+
+from collections import defaultdict
+from django.utils import timezone
+
+@login_required
+def year_view(request):
+    # Получаем записи отпусков
+    vacations = AttendanceRecord.objects.filter(
+        absence_type__code='09', # Убедитесь, что код соответствует типу "Отпуск"
+        date__gte=timezone.now().date()
+    ).select_related('employee', 'employee__profile', 'employee__profile__department')
+
+    # Используем defaultdict для автоматической инициализации ключей
+    vacations_by_year = defaultdict(lambda: {'records': [], 'count': 0})
+
+    # Заполняем словарь: добавляем записи и считаем количество отпусков по годам
+    for record in vacations:
+        year = record.date.year
+        vacations_by_year[year]['records'].append(record)
+        vacations_by_year[year]['count'] += 1
+
+    # Статистика по отделам
+    department_stats = {}
+    for record in vacations:
+        # Проверяем наличие профиля и отдела
+        employee = record.employee
+        if hasattr(employee, 'profile') and employee.profile.department:
+            dept_name = employee.profile.department.name
+            department_stats[dept_name] = department_stats.get(dept_name, 0) + 1
+    # Количество отпусков по годам
+    context = {
+        'vacations_by_year': dict(vacations_by_year),  # преобразуем обратно в dict для шаблона
+        'department_stats': department_stats,
+    }
+    return render(request, 'attendance/year_view.html', context)
+
 
 @login_required
 @csrf_exempt

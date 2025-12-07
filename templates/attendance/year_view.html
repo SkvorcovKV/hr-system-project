@@ -1,0 +1,76 @@
+{% extends 'base.html' %}
+{% block title %}Графики отпусков — HR Система{% endblock %}
+
+{% block content %}
+<div class="card">
+    <div class="card-header bg-primary text-white">
+        <h4 class="mb-0"><i class="fas fa-calendar-alt"></i> Графики отпусков</h4>
+    </div>
+    <div class="card-body">
+        <!-- Блоки «Единый график» с подсчётом отпусков -->
+        <div class="row vacation-grid"> <!-- Контейнер для горизонтальных блоков -->
+            {% for year, data in vacations_by_year.items %}
+                {% if forloop.counter <= 4 %} <!-- Ограничиваем до 4 блоков -->
+                    {% if data.records %}
+                        <div class="col-3 mb-3"> <!-- Ширина 3/12 (25%) для 4 блоков в ряд -->
+                            <div class="card h-100 text-center">
+                                <div class="card-body">
+                                    <h5>Единый график {{ year }}</h5>
+                                    <p>{{ data.count }} отпусков</p>
+                                </div>
+                            </div>
+                        </div>
+                    {% else %}
+                        <div class="col-3 mb-3">
+                            <div class="alert alert-info h-100 text-center">
+                                В {{ year }} отпусков нет
+                            </div>
+                        </div>
+                    {% endif %}
+                {% endif %}
+            {% endfor %}
+        </div>
+
+        <!-- Таблицы по отделам и годам -->
+        <div class="row">
+            <div class="col-md-6">
+                <div class="card">
+                    <div class="card-header bg-light">
+                        <h6 class="mb-0">Графики по отделам</h6>
+                    </div>
+                    <div class="card-body">
+                        <table class="table table-striped">
+                            <thead>
+                                <tr>
+                                    <th>Отдел</th>
+                                    <th>Отпусков</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for dept, count in department_stats.items %}
+                                <tr>
+                                    <td>{{ dept }}</td>
+                                    <td>{{ count }}</td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-6">
+                <div class="card">
+                    <div class="card-header bg-light">
+                        <h6 class="mb-0">Графики по годам</h6>
+                    </div>
+                    <div class="card-body">
+                        {% for year, count in year_counts.items %}
+                        <p><strong>{{ year }}:</strong> {{ count }} отпусков</p>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

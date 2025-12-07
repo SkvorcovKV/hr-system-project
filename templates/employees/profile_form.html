@@ -1,0 +1,59 @@
+{% extends "base.html" %}
+
+{% block content %}
+<h2>Редактировать профиль</h2>
+
+<form method="post" enctype="multipart/form-data">
+    {% csrf_token %}
+    {{ form.as_p }}
+    {{ form }}
+    {{ form.color_code }}
+    {{ form.color_code.errors }}
+
+
+    <style>
+        .color-radio {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            margin-top: 5px;
+        }
+        .color-radio label {
+            display: flex;
+            align-items: center;
+            font-weight: normal;
+            cursor: pointer;
+            padding: 6px 10px;
+            border-radius: 6px;
+            transition: transform 0.1s, box-shadow 0.2s;
+        }
+        .color-radio label:hover {
+            transform: scale(1.05);
+            box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+        }
+        .color-radio input {
+            margin-right: 6px;
+        }
+        /* Цветные квадраты перед текстом — по значению value */
+        .color-radio input[value="#3498db"] + span::before { color: #3498db; }
+        .color-radio input[value="#e74c3c"] + span::before { color: #e74c3c; }
+        .color-radio input[value="#2ecc71"] + span::before { color: #2ecc71; }
+        .color-radio input[value="#f39c12"] + span::before { color: #f39c12; }
+        .color-radio input[value="#9b59b6"] + span::before { color: #9b59b6; }
+        .color-radio input[value="#1abc9c"] + span::before { color: #1abc9c; }
+        .color-radio input[value="#34495e"] + span::before { color: #34495e; }
+        .color-radio input[value="#e67e22"] + span::before { color: #e67e22; }
+        .color-radio input[value="#16a085"] + span::before { color: #16a085; }
+        .color-radio input[value="#8e44ad"] + span::before { color: #8e44ad; }
+
+        .color-radio label span::before {
+            content: "■";
+            margin-right: 6px;
+            font-size: 14px;
+        }
+    </style>
+
+
+    <button type="submit">Сохранить профиль</button>
+</form>
+{% endblock %}

@@ -4,12 +4,13 @@ from django.db import models
 # Create your models here.
 from django.contrib.auth.models import User
 
-class EmployeeProfile(models.Model):
-    def is_manager_of(self, other_employee):
-        """Проверяет, является ли этот сотрудник руководителем другого"""
-        if not self.department:
-            return False
-        return self.department.manager == self.user and other_employee.profile.department == self.department
+#class EmployeeProfile(models.Model):
+    #def is_manager_of(self, other_employee):
+       # """Проверяет, является ли этот сотрудник руководителем другого"""
+        #if not self.department:
+            #return False
+        #return self.department.manager == self.user and other_employee.profile.department == self.department
+
 class Department(models.Model):
     name = models.CharField(max_length=100, verbose_name="Название отдела")
     manager = models.ForeignKey(
@@ -29,6 +30,27 @@ class Department(models.Model):
         verbose_name = "Отдел"
         verbose_name_plural = "Отделы"
 
+
+class Department(models.Model):
+    name = models.CharField(max_length=100, verbose_name="Название отдела")
+    manager = models.ForeignKey(
+        User, 
+        on_delete=models.SET_NULL, 
+        null=True, 
+        blank=True,
+        related_name='managed_departments',
+        verbose_name="Руководитель отдела"
+    )
+    description = models.TextField(blank=True, verbose_name="Описание")
+    
+    def __str__(self):
+        return self.name
+    
+    class Meta:
+        verbose_name = "Отдел"
+        verbose_name_plural = "Отделы"
+
+
 class EmployeeProfile(models.Model):
     user = models.OneToOneField(User, on_delete=models.CASCADE, related_name='profile')
     department = models.ForeignKey(
@@ -46,7 +68,19 @@ class EmployeeProfile(models.Model):
         default='avatars/default.png',
         verbose_name="Фотография"
     )
+    color_code = models.CharField(
+        max_length=7,
+        default="#3498db",
+        verbose_name="Цвет в графике отпусков",
+        help_text="HEX-код цвета, используемый в годовом календаре (например, #ff5733)."
+    )
     
+    def is_manager_of(self, other_employee):
+        """Проверяет, является ли этот сотрудник руководителем другого"""
+        if not self.department:
+            return False
+        return self.department.manager == self.user and other_employee.profile.department == self.department
+
     def __str__(self):
         return f"{self.user.get_full_name()} ({self.position})"
     
